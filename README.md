@@ -67,6 +67,42 @@ Example output fields:
 
 The exact values depend on the generated tensor and are intentionally not hard-coded in this README.
 
+## Local browser laboratory
+
+QuantLab includes a React dashboard backed by a local FastAPI service. It provides three interactive workspaces:
+
+- **Tensor lab** visualizes FP32-to-INT8 reconstruction and compression metrics.
+- **Model inference** loads a selected backend and generates text on the local machine.
+- **Benchmark** measures shared-corpus perplexity, latency, throughput, and memory, then exports JSON.
+
+Install the Python service and at least one model backend from the repository root:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e ".[web,transformers]"
+```
+
+Install the browser dependencies and start both processes:
+
+```powershell
+cd web
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. The React development server runs on port 5173 and the FastAPI service runs on port 8000. Press `Ctrl+C` in the terminal to stop both.
+
+For Intel OpenVINO INT8 instead, install the OpenVINO extra before starting:
+
+```powershell
+pip install -e ".[web,openvino]"
+```
+
+The dashboard does not load remote fonts, analytics, or telemetry. Model repositories may be downloaded by their backend the first time a model is selected; subsequent inference uses the locally cached weights.
+
+API documentation is available while the service runs at `http://127.0.0.1:8000/docs`.
+
 ## Fair model benchmark
 
 Create a small UTF-8 corpus with one document per line, then run each backend against the same file and settings:
@@ -150,6 +186,7 @@ Core CI does not download model weights. Backend integration runs are intentiona
 
 ```text
 src/quantlab/              quantization, metrics, evaluation, backends, CLI
+web/                       Node, Vite, and React local dashboard
 tests/                     deterministic model-free unit tests
 examples/                  shared prompts and evaluation corpus
 configs/                   reproducible experiment configuration
