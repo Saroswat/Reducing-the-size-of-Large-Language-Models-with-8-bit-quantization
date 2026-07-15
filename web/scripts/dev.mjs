@@ -29,6 +29,8 @@ process.on('SIGINT', () => shutdown())
 process.on('SIGTERM', () => shutdown())
 
 start(python, ['-m', 'uvicorn', 'quantlab.api:app', '--host', '127.0.0.1', '--port', '8000'], 'API')
-start(process.execPath, [vite, '--host', '127.0.0.1'], 'web')
+const viteArgs = [vite, '--host', '127.0.0.1']
+if (process.env.QUANTLAB_OPEN_BROWSER === '1') viteArgs.push('--open')
+start(process.execPath, viteArgs, 'web')
 
 console.log('\nQuantLab is starting at http://127.0.0.1:5173\n')
