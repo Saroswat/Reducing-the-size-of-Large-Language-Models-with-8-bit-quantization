@@ -1,36 +1,170 @@
-# Reducing-the-size-of-Large-Language-Models-with-8-bit-quantization
+# QuantLab: reproducible LLM quantization benchmarks
 
+QuantLab is a hardware-aware benchmark for studying how post-training quantization changes language-model memory, quality, and inference performance. It combines transparent NumPy implementations of INT8 quantization with deployable backends for Transformers, bitsandbytes, and OpenVINO.
 
-## Weight Quantization for Reducing Language Model Size
+The project deliberately separates two ideas that are often confused:
 
-## Introduction
-This repository demonstrates techniques to reduce the size of Large Language Models (LLMs) using 8-bit quantization. The code implements two quantization methods - **Absmax Quantization** and **Zeropoint Quantization** - applied to the weights of a GPT-2 language model.
+- **simulated quantization** quantizes and then dequantizes tensors to measure numerical error;
+- **compressed inference** keeps weights in a low-bit representation and uses a runtime that can execute it efficiently.
 
-## Techniques Demonstrated
-- **Absmax Quantization**: Quantizes weights based on their absolute maximum value.
-- **Zeropoint Quantization**: Quantizes weights around the zero-point to reduce the range.
+The original GPT-2 notebook remains in the repository as historical learning material. The package and command-line tools provide the reproducible experiment layer.
 
-## Libraries and Requirements
-The code uses the following libraries:
-- PyTorch
-- Hugging Face Transformers
-- Accelerate
+## What this project answers
 
-Ensure that these are installed to run the code successfully.
+- How much memory do FP32, FP16, bitsandbytes INT8, and OpenVINO INT8 use?
+- What is the perplexity change when every backend sees the same evaluation tokens?
+- How do per-tensor and per-channel quantization affect reconstruction error?
+- What are the latency and throughput trade-offs on the target machine?
+- Which layers are most sensitive to quantization?
 
-## Code Overview
-The code contains functionalities for:
-- Implementing Absmax and Zeropoint Quantization functions for weight reduction.
-- Loading and quantizing weights of the GPT-2 model.
-- Visualizing the impact of quantization on weight distributions using histograms.
-- Generating text with the original and quantized models.
-- Calculating perplexity to evaluate model performance before and after quantization.
+## Experiment matrix
 
-## Usage
-1. **Installation**: Install the required packages using the specified `!pip` commands.
-2. **Running the Code**: Execute the code blocks sequentially to observe each step of quantization and its impact.
-3. **Visualizations**: Check the visualizations generated to understand the effects of weight quantization.
-4. **Model Performance**: Evaluate model performance using perplexity scores provided before and after quantization.
+| Backend | Representation | Primary use |
+| --- | --- | --- |
+| `fp32` | full precision | quality reference |
+| `fp16` | half precision | reduced-precision GPU reference |
+| `bnb-int8` | outlier-aware `LLM.int8()` | GPU compressed inference |
+| `openvino-int8` | OpenVINO/NNCF INT8 | CPU/GPU deployment |
 
-## Model Size Reduction
-The code demonstrates how 8-bit quantization significantly reduces model size compared to the original GPT-2 model. The `LLM.int8()` method creates an 8-bit quantized model, effectively reducing memory footprint while maintaining functionality.
+The core module additionally implements symmetric and affine signed INT8 quantization, both per-tensor and per-channel. Those implementations retain `int8` values and explicit scale/zero-point metadata; dequantization is a separate operation.
+
+## Installation
+
+Python 3.10 or newer is recommended.
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
+
+pip install -e ".[dev]"             # core algorithms and tests
+pip install -e ".[transformers]"    # FP32 and FP16 benchmarks
+pip install -e ".[bitsandbytes]"    # NVIDIA LLM.int8()
+pip install -e ".[openvino]"        # OpenVINO export/inference
+```
+
+Extras are separate because bitsandbytes and OpenVINO target different hardware environments.
+
+## Quick start: inspect quantization error
+
+```bash
+quantlab tensor-demo --shape 256 768 --axis 0 --seed 7
+```
+
+Example output fields:
+
+```json
+{
+  "scheme": "symmetric",
+  "granularity": "per-channel(axis=0)",
+  "storage_bytes": 198144,
+  "compression_ratio_vs_fp32": 3.97,
+  "mse": 0.000061,
+  "cosine_similarity": 0.99997,
+  "sqnr_db": 42.1
+}
+```
+
+The exact values depend on the generated tensor and are intentionally not hard-coded in this README.
+
+## Fair model benchmark
+
+Create a small UTF-8 corpus with one document per line, then run each backend against the same file and settings:
+
+```bash
+quantlab benchmark \
+  --model gpt2 \
+  --backend fp32 \
+  --corpus examples/eval_corpus.txt \
+  --prompts examples/prompts.txt \
+  --output results/gpt2-fp32.json
+
+quantlab benchmark --model gpt2 --backend bnb-int8 \
+  --corpus examples/eval_corpus.txt --prompts examples/prompts.txt \
+  --output results/gpt2-bnb-int8.json
+```
+
+Each report records:
+
+- backend, model, device, package versions, and seed;
+- parameter bytes and reported model memory footprint;
+- perplexity on the exact same tokenized corpus;
+- mean and p95 generation latency;
+- generated tokens per second;
+- prompt and generation settings.
+
+Compare reports:
+
+```bash
+quantlab compare results/gpt2-*.json
+```
+
+## Methodology
+
+### Quality
+
+Perplexity is computed with a sliding window over one fixed token sequence. Labels that fall outside the newly evaluated stride are masked, preventing overlap from being counted twice. Comparing perplexity on separately generated text is invalid because the models are not evaluated on the same prediction task.
+
+### Performance
+
+The benchmark warms up the backend, uses deterministic greedy decoding, synchronizes CUDA when applicable, and reports end-to-end generation latency plus output-token throughput. Run measurements on the deployment hardware; cloud notebook numbers are not portable.
+
+### Memory
+
+`model.get_memory_footprint()` is recorded when supported. Parameter storage is calculated independently from tensor element sizes. Disk artifacts should be measured after exporting the model because simulated quantization does not reduce checkpoint size.
+
+## Reproducible result table
+
+Do not copy unverified numbers into documentation. Generate the reports on your hardware and summarize them in this form:
+
+| Backend | Parameter/storage memory | Perplexity | Perplexity delta | Mean latency | Tokens/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FP32 | generated | generated | baseline | generated | generated |
+| FP16 | generated | generated | generated | generated | generated |
+| bitsandbytes INT8 | generated | generated | generated | generated | generated |
+| OpenVINO INT8 | generated | generated | generated | generated | generated |
+
+## Advanced investigations
+
+QuantLab is structured to support:
+
+- layer-wise sensitivity analysis using reconstruction error or logit divergence;
+- group-wise INT4/INT8 experiments;
+- activation calibration and static quantization;
+- outlier thresholds for `LLM.int8()`;
+- AWQ/GPTQ backends;
+- KL divergence between baseline and quantized next-token distributions;
+- task-level evaluation through `lm-evaluation-harness`.
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+pytest
+ruff check src tests scripts
+```
+
+Core CI does not download model weights. Backend integration runs are intentionally hardware-specific and should be executed through the benchmark CLI.
+
+## Repository layout
+
+```text
+src/quantlab/              quantization, metrics, evaluation, backends, CLI
+tests/                     deterministic model-free unit tests
+examples/                  shared prompts and evaluation corpus
+configs/                   reproducible experiment configuration
+results/                   generated report guidance
+scripts/                   experiment orchestrator
+.github/workflows/ci.yml   lint and test checks
+```
+
+## Limitations
+
+- GPT-2 is useful for a fast demonstration but is not representative of every modern architecture.
+- Backend support depends on operating system and hardware.
+- Perplexity captures language-modelling quality, not instruction following or factuality.
+- Quantization results should include multiple models, datasets, and seeds before drawing broad conclusions.
+
+## License
+
+MIT. Model weights and datasets remain subject to their respective licences and terms.
