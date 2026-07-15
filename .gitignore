@@ -1,5 +1,7 @@
 .venv/
 .testdeps/
+web/node_modules/
+web/dist/
 __pycache__/
 *.py[cod]
 .pytest_cache/
