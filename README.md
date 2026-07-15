@@ -75,6 +75,33 @@ QuantLab includes a React dashboard backed by a local FastAPI service. It provid
 - **Model inference** loads a selected backend and generates text on the local machine.
 - **Benchmark** measures shared-corpus perplexity, latency, throughput, and memory, then exports JSON.
 
+### One-command Windows setup
+
+From the repository root, copy and paste:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1
+```
+
+The script safely creates or repairs `.venv`, installs the Transformers backend, installs the locked Node dependencies, validates runtime imports, starts both services, and opens the dashboard. Paths containing spaces are supported.
+
+Choose OpenVINO or install every backend with:
+
+```powershell
+.\scripts\setup_and_run.ps1 -Backend openvino
+.\scripts\setup_and_run.ps1 -Backend all
+```
+
+Useful options:
+
+```powershell
+.\scripts\setup_and_run.ps1 -CheckOnly       # install and run validation without starting servers
+.\scripts\setup_and_run.ps1 -SkipInstall     # start using existing dependencies
+.\scripts\setup_and_run.ps1 -NoBrowser       # start without opening a browser tab
+```
+
+The manual setup remains available below for users who prefer individual commands.
+
 Install the Python service and at least one model backend from the repository root:
 
 ```powershell
