@@ -5,9 +5,10 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   { ignores: ['dist'] },
+  js.configs.recommended,
+  reactHooks.configs.flat.recommended,
   {
     files: ['**/*.{js,jsx,mjs}'],
-    extends: [js.configs.recommended, reactHooks.configs.flat.recommended],
     languageOptions: {
       ecmaVersion: 2024,
       globals: { ...globals.browser, ...globals.node },
@@ -15,6 +16,8 @@ export default [
     },
     plugins: { 'react-refresh': reactRefresh },
     rules: {
+      // Core ESLint does not mark JSX component references as variable usage.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z]' }],
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
