@@ -29,13 +29,14 @@ def load_backend(model_id: str, backend: BackendName, *, device: str = "auto") -
             message = 'Install OpenVINO support with pip install -e ".[openvino]"'
             raise RuntimeError(message) from error
         quantization_config = OVWeightQuantizationConfig(bits=8)
+        target_device = device.upper() if device != "auto" else "AUTO"
         model = OVModelForCausalLM.from_pretrained(
             model_id,
             export=True,
             quantization_config=quantization_config,
-            device=device.upper() if device != "auto" else "AUTO",
+            device=target_device,
         )
-        return LoadedBackend(model, tokenizer, backend, device)
+        return LoadedBackend(model, tokenizer, backend, target_device)
 
     try:
         import torch
