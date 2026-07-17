@@ -9,6 +9,46 @@ The project deliberately separates two ideas that are often confused:
 
 The original GPT-2 notebook remains in the repository as historical learning material. The package and command-line tools provide the reproducible experiment layer.
 
+## Windows: clone, install, and run entirely in PowerShell
+
+Prerequisites: [Git for Windows](https://git-scm.com/download/win), [Node.js LTS](https://nodejs.org/), and Python 3.10 or newer. After installing them, reopen PowerShell so the commands are available.
+
+Copy and paste this complete block. It clones the current default branch into `%USERPROFILE%\QuantLab`, installs the Python and locked Node dependencies, validates both runtimes, starts FastAPI and React, and opens the browser:
+
+```powershell
+$repo = "https://github.com/Saroswat/Reducing-the-size-of-Large-Language-Models-with-8-bit-quantization.git"
+$destination = Join-Path $HOME "QuantLab"
+
+if (Test-Path (Join-Path $destination ".git")) {
+    git -C $destination pull --ff-only
+} elseif (Test-Path $destination) {
+    throw "Destination already exists and is not a Git checkout: $destination"
+} else {
+    git clone $repo $destination
+}
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "$destination\scripts\setup_and_run.ps1"
+```
+
+After the first clone, future runs only need:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$HOME\QuantLab\scripts\setup_and_run.ps1" -SkipInstall
+```
+
+For a reusable installer, download [`scripts/clone_setup_run.ps1`](scripts/clone_setup_run.ps1) to a temporary file and execute it. This avoids piping remote code directly into `Invoke-Expression` and lets you inspect the downloaded script first:
+
+```powershell
+$installer = Join-Path $env:TEMP "quantlab-clone-setup-run.ps1"
+$installerUrl = "https://raw.githubusercontent.com/Saroswat/Reducing-the-size-of-Large-Language-Models-with-8-bit-quantization/refs/heads/agent/quantlab-modernization/scripts/clone_setup_run.ps1"
+Invoke-WebRequest -UseBasicParsing -Uri $installerUrl -OutFile $installer
+powershell -NoProfile -ExecutionPolicy Bypass -File $installer -Destination "$HOME\QuantLab" -Backend transformers
+```
+
+The reusable installer verifies the Git remote, refuses to overwrite another directory, rejects dirty updates, and supports `-Backend openvino`, `-Backend all`, `-CheckOnly`, `-NoBrowser`, and `-SkipUpdate`.
+
+When running, open `http://127.0.0.1:5173` for the dashboard or `http://127.0.0.1:8000/docs` for the API. Press `Ctrl+C` in the PowerShell window to stop both services.
+
 ## What this project answers
 
 - How much memory do FP32, FP16, bitsandbytes INT8, and OpenVINO INT8 use?
@@ -250,4 +290,3 @@ scripts/                   experiment orchestrator
 ## License
 
 MIT. Model weights and datasets remain subject to their respective licences and terms.
-
