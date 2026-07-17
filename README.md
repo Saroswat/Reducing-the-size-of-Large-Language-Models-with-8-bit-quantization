@@ -77,28 +77,46 @@ QuantLab includes a React dashboard backed by a local FastAPI service. It provid
 
 ### One-command Windows setup
 
-From the repository root, copy and paste:
+The launcher is [`scripts/setup_and_run.ps1`](scripts/setup_and_run.ps1). It safely creates or repairs `.venv`, installs the selected Python backend, installs the locked Node dependencies, validates both runtimes, starts FastAPI and Vite, and opens the dashboard. Paths containing spaces are supported.
+
+#### Direct copy/paste for this checkout
+
+This command works from **any PowerShell directory** on the current development machine:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\Saroswat - XPS\Documents\Codex\2026-07-12\h\work\quantlab\scripts\setup_and_run.ps1"
+```
+
+#### Portable command after cloning
+
+From the repository root, run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1
 ```
 
-The script safely creates or repairs `.venv`, installs the Transformers backend, installs the locked Node dependencies, validates runtime imports, starts both services, and opens the dashboard. Paths containing spaces are supported.
+The default installs the Transformers/PyTorch backend. The first run can take several minutes because Python packages and model dependencies may need to download.
 
 Choose OpenVINO or install every backend with:
 
 ```powershell
-.\scripts\setup_and_run.ps1 -Backend openvino
-.\scripts\setup_and_run.ps1 -Backend all
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1 -Backend openvino
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1 -Backend all
 ```
 
 Useful options:
 
 ```powershell
-.\scripts\setup_and_run.ps1 -CheckOnly       # install and run validation without starting servers
-.\scripts\setup_and_run.ps1 -SkipInstall     # start using existing dependencies
-.\scripts\setup_and_run.ps1 -NoBrowser       # start without opening a browser tab
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1 -CheckOnly
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1 -SkipInstall
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_and_run.ps1 -NoBrowser
 ```
+
+When startup succeeds, use:
+
+- Dashboard: `http://127.0.0.1:5173`
+- API documentation: `http://127.0.0.1:8000/docs`
+- Stop both services: press `Ctrl+C` in the same PowerShell window
 
 The manual setup remains available below for users who prefer individual commands.
 
@@ -107,14 +125,14 @@ Install the Python service and at least one model backend from the repository ro
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -e ".[web,transformers]"
+python -m pip install --upgrade -e ".[web,transformers]"
 ```
 
 Install the browser dependencies and start both processes:
 
 ```powershell
 cd web
-npm install
+npm ci
 npm run dev
 ```
 
@@ -123,7 +141,7 @@ Open `http://127.0.0.1:5173`. The React development server runs on port 5173 and
 For Intel OpenVINO INT8 instead, install the OpenVINO extra before starting:
 
 ```powershell
-pip install -e ".[web,openvino]"
+python -m pip install --upgrade -e ".[web,openvino]"
 ```
 
 The dashboard does not load remote fonts, analytics, or telemetry. Model repositories may be downloaded by their backend the first time a model is selected; subsequent inference uses the locally cached weights.
@@ -232,3 +250,4 @@ scripts/                   experiment orchestrator
 ## License
 
 MIT. Model weights and datasets remain subject to their respective licences and terms.
+
