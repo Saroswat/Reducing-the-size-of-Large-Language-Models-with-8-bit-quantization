@@ -9,6 +9,25 @@ The project deliberately separates two ideas that are often confused:
 
 The original GPT-2 notebook remains in the repository as historical learning material. The package and command-line tools provide the reproducible experiment layer.
 
+## Interface preview
+
+<p align="center">
+  <img src="docs/screenshots/quantlab-tensor-lab.png" alt="QuantLab Tensor Lab showing live INT8 compression and reconstruction metrics" width="100%">
+</p>
+
+<p align="center"><strong>Tensor Lab</strong> — real INT8 storage, reconstruction trace, compression, SQNR, cosine similarity, and error metrics from the local Python engine.</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/quantlab-model-inference.png" alt="QuantLab local model inference workspace"></td>
+    <td width="50%"><img src="docs/screenshots/quantlab-benchmark.png" alt="QuantLab quality and throughput benchmark workspace"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Local model inference</strong></td>
+    <td align="center"><strong>Quality and throughput benchmark</strong></td>
+  </tr>
+</table>
+
 ## Windows: clone, install, and run entirely in PowerShell
 
 Prerequisites: [Git for Windows](https://git-scm.com/download/win), [Node.js LTS](https://nodejs.org/), and Python 3.10 or newer. After installing them, reopen PowerShell so the commands are available.

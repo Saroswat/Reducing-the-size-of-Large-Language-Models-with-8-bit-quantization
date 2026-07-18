@@ -140,7 +140,7 @@ function TensorLab() {
         </Field>
         <div className="field-grid">
           <Field label="Seed"><input name="seed" type="number" value={form.seed} onChange={update} /></Field>
-          <Field label="Standard deviation"><input name="standard_deviation" type="number" min="0.01" max="100" step="0.1" value={form.standard_deviation} onChange={update} /></Field>
+          <Field label="Standard deviation"><input name="standard_deviation" type="number" min="0.01" max="100" step="0.01" value={form.standard_deviation} onChange={update} /></Field>
         </div>
         <button className="primary" disabled={busy}>{busy ? 'Quantizing…' : 'Run experiment'}</button>
         {error && <p className="error">{error}</p>}
