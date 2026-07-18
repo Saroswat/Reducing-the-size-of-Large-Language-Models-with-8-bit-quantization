@@ -1,0 +1,11 @@
+{
+  "model": "gpt2",
+  "seed": 7,
+  "max_length": 1024,
+  "stride": 512,
+  "max_new_tokens": 32,
+  "repeats": 3,
+  "backends": ["fp32", "fp16", "bnb-int8", "openvino-int8"],
+  "corpus": "examples/eval_corpus.txt",
+  "prompts": "examples/prompts.txt"
+}

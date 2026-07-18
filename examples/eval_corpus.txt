@@ -1,0 +1,5 @@
+Quantization reduces numerical precision to lower memory use and accelerate inference.
+Large language models can contain billions of parameters and require careful evaluation.
+A fair benchmark evaluates every backend on the same fixed sequence of tokens.
+Per-channel scales often preserve small-magnitude channels better than one global scale.
+Deployment performance depends on the model architecture, runtime, device, and batch size.

@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "quantlab-llm"
+version = "0.2.0"
+description = "Reproducible LLM quantization and deployment benchmarks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Saroswat Roy" }]
+dependencies = [
+  "numpy>=1.24,<3; python_version < '3.14'",
+  "numpy>=2.5,<3; python_version >= '3.14'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+web = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+]
+transformers = [
+  "accelerate>=0.30,<2",
+  "datasets>=2.19,<5",
+  "torch>=2.2,<3",
+  "transformers>=4.41,<5",
+]
+bitsandbytes = [
+  "accelerate>=0.30,<2",
+  "bitsandbytes>=0.43,<1",
+  "datasets>=2.19,<5",
+  "torch>=2.2,<3",
+  "transformers>=4.41,<5",
+]
+openvino = [
+  "nncf>=2.11,<3",
+  "openvino>=2024.3",
+  "optimum-intel[openvino]>=1.20",
+  "transformers>=4.41,<5",
+]
+
+[project.scripts]
+quantlab = "quantlab.cli:main"
+quantlab-api = "quantlab.api:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quantlab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["*.ipynb", ".testdeps"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
